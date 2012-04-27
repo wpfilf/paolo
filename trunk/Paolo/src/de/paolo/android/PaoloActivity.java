@@ -1,53 +1,43 @@
 package de.paolo.android;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
-import android.os.Handler;
 import android.speech.RecognizerIntent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class PaoloActivity extends Activity implements OnClickListener {
-	
-	private static final String TAG = "VoiceRecognition";
 
     private static final int VOICE_RECOGNITION_REQUEST_CODE = 1234;
 
+    protected Context mContext;
+    
     private ListView mList;
-
-    private String mPaoloSagt;
-    private String mSagt;
+    private String mInput;
 	
 	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-        mHandler = new Handler();
 
         // Inflate our UI from its XML layout description.
         setContentView(R.layout.main);
-
+        
+        //setContext
+        mContext = getApplicationContext();
+        
         // Get display items for later interaction
         Button speakButton = (Button) findViewById(R.id.speakbtn);
 
@@ -69,8 +59,10 @@ public class PaoloActivity extends Activity implements OnClickListener {
         // locale), the application does not need to read the voice settings.
     }
     
-    /**
+    /*******************************************
+     * 
      * Handle the click on the start recognition button.
+     * 
      */
     public void onClick(View v) {
         if (v.getId() == R.id.speakbtn) {
@@ -78,8 +70,10 @@ public class PaoloActivity extends Activity implements OnClickListener {
         }
     }
 
-    /**
+    /*****************************************
+     * 
      * Fire an intent to start the speech recognition activity.
+     * 
      */
     private void startVoiceRecognitionActivity() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -106,8 +100,10 @@ public class PaoloActivity extends Activity implements OnClickListener {
         startActivityForResult(intent, VOICE_RECOGNITION_REQUEST_CODE);
     }
 
-    /**
+    /**************************************
+     * 
      * Handle the results from the recognition activity.
+     *
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -120,63 +116,26 @@ public class PaoloActivity extends Activity implements OnClickListener {
             mList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
                     matches));
             
-            mSagt = matches.get(0);
+            //get first Match
+            mInput = matches.get(0);
+            //send to paolo asyncTask
+            PaoloSays paolo = new PaoloSays(PaoloActivity.this);
+            paolo.execute("TestBot",mInput);
             
-            //send to paolo
-        	mPaoloSagt = postData("eingabe" + " " + mSagt);
         }
 
         super.onActivityResult(requestCode, resultCode, data);
     }
-
-//    private void refreshVoiceSettings() {
-//        Log.i(TAG, "Sending broadcast");
-//        sendOrderedBroadcast(RecognizerIntent.getVoiceDetailsIntent(this), null,
-//                new SupportedLanguageBroadcastReceiver(), null, Activity.RESULT_OK, null, null);
-//    }
-
     
-    public String postData(String msg) {
-	    // Create a new HttpClient and Post Header
-	    HttpClient httpclient = new DefaultHttpClient();
-	    HttpPost httppost = new HttpPost("http://paperbits.informatik.hs-augsburg.de/paolo/src/androidtalk.php");
-	    HttpResponse response;
-	    
-	    try {
-	        // Add your data
-	    	
-//	        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-//	        nameValuePairs.add(new BasicNameValuePair("id", "12345"));
-//	        nameValuePairs.add(new BasicNameValuePair("stringdata", "AndDev is Cool!"));
-	        httppost.setEntity(new StringEntity(msg));
-
-	        // Execute HTTP Post Request
-	        response = httpclient.execute(httppost);
-	        
-	    } catch (ClientProtocolException e) {
-	        // TODO Auto-generated catch block
-	    } catch (IOException e) {
-	        // TODO Auto-generated catch block
-	    }
-	    
-	    
-	    StringBuilder sb = inputStreamToString(response.getEntity().getContent());
-	    return sb.toString();
-	} 
     
-    private StringBuilder inputStreamToString(InputStream is) throws IOException {
-        String line = "";
-        StringBuilder total = new StringBuilder();
-        
-        // Wrap a BufferedReader around the InputStream
-        BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-
-        // Read response until the end
-        while ((line = rd.readLine()) != null) { 
-            total.append(line); 
-        }
-        
-        // Return full string
-        return total;
+    /************************************
+     *
+     * Spreche den Antwort-Text
+     * 
+     * @param antw
+     */
+    public void talk(String antw){
+    	Toast.makeText(mContext, antw, Toast.LENGTH_SHORT).show();
     }
+    
 }
