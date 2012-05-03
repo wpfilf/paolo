@@ -1,7 +1,9 @@
 package de.paolo.android;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,6 +12,9 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.TextToSpeech.OnInitListener;
+import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -17,15 +22,19 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class PaoloActivity extends Activity implements OnClickListener {
+public class PaoloActivity extends Activity implements OnClickListener, OnInitListener, OnUtteranceCompletedListener {
 
     private static final int VOICE_RECOGNITION_REQUEST_CODE = 1234;
+    private static final int MY_DATA_CHECK_CODE = 5678;
 
     protected Context mContext;
     
     private ListView mList;
     private String mInput;
-	
+    private TextToSpeech mTts;
+    private String mAntw;
+    private boolean mTTSReady = false;
+    private HashMap<String, String> mHash;
 	
 	/** Called when the activity is first created. */
     @Override
@@ -54,9 +63,10 @@ public class PaoloActivity extends Activity implements OnClickListener {
             speakButton.setText("Recognizer not present");
         }
 
-        // Most of the applications do not have to handle the voice settings. If the application
-        // does not require a recognition in a specific language (i.e., different from the system
-        // locale), the application does not need to read the voice settings.
+       //Check if TTS Engine is available on phone
+        Intent checkTTSIntent = new Intent();
+        checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+        startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
     }
     
     /*******************************************
@@ -122,6 +132,22 @@ public class PaoloActivity extends Activity implements OnClickListener {
             PaoloSays paolo = new PaoloSays(PaoloActivity.this);
             paolo.execute("TestBot",mInput);
             
+        }else {
+        	
+        	if (requestCode == MY_DATA_CHECK_CODE) {
+                if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                    // success, create the TTS instance
+                    mTts = new TextToSpeech(mContext, this);
+                    mTts.setOnUtteranceCompletedListener(this);
+                } else {
+                    // missing data, install it
+                    Intent installIntent = new Intent();
+                    installIntent.setAction(
+                        TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                    startActivity(installIntent);
+                }
+            }
+        	
         }
 
         super.onActivityResult(requestCode, resultCode, data);
@@ -135,7 +161,56 @@ public class PaoloActivity extends Activity implements OnClickListener {
      * @param antw
      */
     public void talk(String antw){
-    	Toast.makeText(mContext, antw, Toast.LENGTH_SHORT).show();
+    	
+    	mAntw = antw;
+    	
+    	if(mTTSReady){
+    		mTts.speak(antw, TextToSpeech.QUEUE_FLUSH, mHash);
+    	}else{
+    		Toast.makeText(mContext, "TTS not ready", Toast.LENGTH_SHORT).show();
+    	}
+    	
     }
+    
+    /************************************
+    *
+    * When TTS speaker has finished Event
+    * 
+    * @param antw
+    */
+    public void onUtteranceCompleted(String utteranceId) {
+		if(utteranceId == "EOA"){
+			Toast.makeText(mContext, mAntw, Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	/************************************
+    *
+    * TTS Init finished
+    * 
+    * @param antw
+    */
+	public void onInit(int status) {
+		// TODO Auto-generated method stub
+		mTts.setLanguage(Locale.GERMANY);
+		mHash = new HashMap<String, String>();
+		mHash.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "EOA");
+		mTTSReady = true;
+	}
+	
+	
+	/************************************
+    *
+    * Close TTS Engine
+    * 
+    */
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		
+		mTts.shutdown();
+	}
+	
+	
     
 }
