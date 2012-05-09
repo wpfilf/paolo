@@ -30,11 +30,12 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
     protected Context mContext;
     
     private ListView mList;
-    private String mInput;
     private TextToSpeech mTts;
     private String mAntw;
     private boolean mTTSReady = false;
     private HashMap<String, String> mHash;
+    private ArrayList<String> mListItems;
+    private ArrayAdapter<String> mAdapter;
 	
 	/** Called when the activity is first created. */
     @Override
@@ -50,8 +51,12 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
         // Get display items for later interaction
         Button speakButton = (Button) findViewById(R.id.speakbtn);
 
+        //init list
         mList = (ListView) findViewById(R.id.historylist);
-
+        mListItems = new ArrayList<String>();
+        mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,mListItems);
+        mList.setAdapter(mAdapter);
+        
         // Check to see if a recognition activity is present
         PackageManager pm = getPackageManager();
         List<ResolveInfo> activities = pm.queryIntentActivities(
@@ -84,7 +89,8 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
      * 
      * Fire an intent to start the speech recognition activity.
      * 
-     */
+     *****************************************/
+    
     private void startVoiceRecognitionActivity() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
 
@@ -92,7 +98,7 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getClass().getPackage().getName());
 
         // Display an hint to the user about what he should say.
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speech recognition demo");
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Sprich mit Paolo");
 
         // Given an hint to the recognizer about what the user is going to say
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -110,27 +116,31 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
         startActivityForResult(intent, VOICE_RECOGNITION_REQUEST_CODE);
     }
 
-    /**************************************
+    /****************************************************
      * 
      * Handle the results from the recognition activity.
      *
-     */
+     ****************************************************/
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == VOICE_RECOGNITION_REQUEST_CODE && resultCode == RESULT_OK) {
            
-        	
-        	// Fill the list view with the strings the recognizer thought it could have heard
-            ArrayList<String> matches = data.getStringArrayListExtra(
-                    RecognizerIntent.EXTRA_RESULTS);
-            mList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
-                    matches));
+        	// Fill the list view with the string the recognizer thought it could have heard
+            ArrayList<String> recList = new ArrayList<String>();
+        	recList = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             
-            //get first Match
-            mInput = matches.get(0);
-            //send to paolo asyncTask
+        	//get first response
+            String input = recList.get(0);
+            
+            //put in list
+            mListItems.add(input);
+    		mAdapter.notifyDataSetChanged();
+            
+            
+            //send to paolo asyncTask to get answer
             PaoloSays paolo = new PaoloSays(PaoloActivity.this);
-            paolo.execute("TestBot",mInput);
+            paolo.execute("TestBot",input);
             
         }else {
         	
@@ -165,7 +175,14 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
     	mAntw = antw;
     	
     	if(mTTSReady){
+    		
+    		//speak answer
     		mTts.speak(antw, TextToSpeech.QUEUE_FLUSH, mHash);
+    		
+    		//fill item in list
+    		mListItems.add(mAntw);
+    		mAdapter.notifyDataSetChanged();
+    		
     	}else{
     		Toast.makeText(mContext, "TTS not ready", Toast.LENGTH_SHORT).show();
     	}
@@ -179,9 +196,7 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
     * @param antw
     */
     public void onUtteranceCompleted(String utteranceId) {
-		if(utteranceId == "EOA"){
-			Toast.makeText(mContext, mAntw, Toast.LENGTH_SHORT).show();
-		}
+			//Toast.makeText(mContext, mAntw, Toast.LENGTH_SHORT).show();
 	}
 
 	/************************************
