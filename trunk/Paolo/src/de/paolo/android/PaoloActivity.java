@@ -54,8 +54,10 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
         //init list
         mList = (ListView) findViewById(R.id.historylist);
         mListItems = new ArrayList<String>();
-        mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,mListItems);
+        mAdapter = new PaoloArrayAdapter(this, R.layout.historyrow, mListItems);
+        
         mList.setAdapter(mAdapter);
+        
         
         // Check to see if a recognition activity is present
         PackageManager pm = getPackageManager();
@@ -188,6 +190,10 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
     	}
     	
     }
+    
+    
+    
+    
     
     /************************************
     *
