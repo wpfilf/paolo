@@ -6,15 +6,12 @@
     android:background="@drawable/bg"
     android:weightSum="10" >
     
-    <ImageView 
-	   android:id="@+id/test_image"
-	   android:src="@drawable/topbar"
-	   android:layout_width="fill_parent"
-	   android:layout_height="90dip"
-	   android:layout_weight="1"
-	   android:adjustViewBounds="true"
-	   android:scaleType="fitXY"
-   	/>
+    <ImageView
+        android:id="@+id/test_image"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:src="@drawable/topbar2" />
 	
     <ListView
         android:id="@+id/historylist"
@@ -22,14 +19,15 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" 
         android:transcriptMode="alwaysScroll"
-        android:layout_weight="8" >
+        android:layout_weight="7" >
     </ListView>
 
     <Button
         android:id="@+id/speakbtn"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/button_text" 
-        android:layout_weight="1" />
+        android:layout_height="90dip"
+        android:adjustViewBounds="true"
+        android:background="@drawable/button"
+        android:text="@string/button_text" />
 
 </LinearLayout>
