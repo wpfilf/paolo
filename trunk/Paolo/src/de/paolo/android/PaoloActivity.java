@@ -44,6 +44,7 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
 
         // Inflate our UI from its XML layout description.
         setContentView(R.layout.main);
+        //setContentView(R.drawable.button);
         
         //setContext
         mContext = getApplicationContext();
