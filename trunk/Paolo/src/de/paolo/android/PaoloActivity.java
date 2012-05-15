@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
@@ -58,6 +59,9 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
         mAdapter = new PaoloArrayAdapter(this, R.layout.historyrow, mListItems);
         
         mList.setAdapter(mAdapter);
+        
+        //Volume control
+        this.setVolumeControlStream(AudioManager.STREAM_MUSIC);  
         
         
         // Check to see if a recognition activity is present
