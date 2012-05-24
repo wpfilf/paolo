@@ -3,6 +3,8 @@ package de.paolo.android;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,9 +48,9 @@ public class PaoloArrayAdapter extends ArrayAdapter<String>{
 					p, textView.getPaddingBottom());
 		}
 		
-		textView.setText(items.get(position));
-		
-		
+		textView.setText(Html.fromHtml(items.get(position)));
+		textView.setMovementMethod(LinkMovementMethod.getInstance());
+		textView.setLinksClickable(true);
 		
 		return listView;
 	}

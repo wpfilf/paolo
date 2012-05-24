@@ -100,6 +100,7 @@ public class PaoloSays extends AsyncTask<String, Void, String> {
 	 ********************************************/
 	@Override
 	protected void onPostExecute(String result) {
+		
 		activity.talk(result);
 	}
 }

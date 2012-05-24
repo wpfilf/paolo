@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.content.Context;
@@ -32,7 +34,8 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
     
     private ListView mList;
     private TextToSpeech mTts;
-    private String mAntw;
+    private String mTextAntw;
+    private String mSpeechAntw;
     private boolean mTTSReady = false;
     private HashMap<String, String> mHash;
     private ArrayList<String> mListItems;
@@ -61,7 +64,11 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
         mList.setAdapter(mAdapter);
         
         //Volume control
-        this.setVolumeControlStream(AudioManager.STREAM_MUSIC);  
+        this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        
+        //Screen TimeOut Control
+        //mTimeOut = Settings.System.getInt(getContentResolver(),Settings.System.SCREEN_OFF_TIMEOUT, DELAY);
+        //Settings.System.putInt(getContentResolver(),Settings.System.SCREEN_OFF_TIMEOUT, DELAY);
         
         
         // Check to see if a recognition activity is present
@@ -87,7 +94,15 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
      * 
      */
     public void onClick(View v) {
-        if (v.getId() == R.id.speakbtn) {
+        //cancel speaking
+    	if(mTTSReady){
+    		if(mTts.isSpeaking()){
+    			mTts.stop();
+    		}
+    	}
+    	
+    	//record new voice input
+    	if (v.getId() == R.id.speakbtn) {
             startVoiceRecognitionActivity();
         }
     }
@@ -173,21 +188,145 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
     
     /************************************
      *
-     * Spreche den Antwort-Text
+     * Parse und Spreche den Antwort-Text
      * 
      * @param antw
      */
     public void talk(String antw){
     	
-    	mAntw = antw;
+    	mTextAntw = antw;
+    	mSpeechAntw = antw;
+    	
+    	int tag1S,tag1E,tag2S,tag2E;
+    	String exp,tag,data,gdata,insert;
+    	
+    	//replace Links
+    	Pattern pMap = Pattern.compile(".*?(\\[map\\]).*?(\\[\\/map\\])",Pattern.CASE_INSENSITIVE);
+    	Pattern pMail = Pattern.compile(".*?(\\[mail\\]).*?(\\[\\/mail\\])",Pattern.CASE_INSENSITIVE);
+    	Pattern pWeb = Pattern.compile(".*?(\\[web\\]).*?(\\[\\/web\\])",Pattern.CASE_INSENSITIVE);
+    	Pattern pTel = Pattern.compile(".*?(\\[tel\\]).*?(\\[\\/tel\\])",Pattern.CASE_INSENSITIVE);
+    	Pattern pBR  = Pattern.compile("(\\[br\\])",Pattern.CASE_INSENSITIVE);
+    	
+    	
+    	//Google Maps Link
+    	Matcher matchMap = pMap.matcher(mTextAntw);
+    	
+    	if(matchMap.find()){
+    		//get start/end point of tags
+    		tag1S = matchMap.start(1);
+    		tag1E = matchMap.end(1);
+    		tag2S = matchMap.start(2);
+    		tag2E = matchMap.end(2);
+    		
+    		//store data
+    		data = mTextAntw.substring(tag1E, tag2S);
+    		gdata = data.replaceAll("\\s+", "+");
+    		//store first tag for later replacement
+    		tag = mTextAntw.substring(tag1S,tag1E);
+    		//delete tags and between
+    		exp = mTextAntw.substring(tag1E, tag2E);
+    		mTextAntw = mTextAntw.replace(exp,"");
+    		//add data
+    		insert = "<a href=\"http://www.maps.google.com/maps?q="+gdata+"\">"+data+"</a>";
+    		mTextAntw = mTextAntw.replace(tag,insert);
+    		
+    	}
+    	
+    	//E-Mail Links
+    	Matcher matchMail = pMail.matcher(mTextAntw);
+    	
+    	if(matchMail.find()){
+    		//get start/end point of tags
+    		tag1S = matchMail.start(1);
+    		tag1E = matchMail.end(1);
+    		tag2S = matchMail.start(2);
+    		tag2E = matchMail.end(2);
+    		
+    		//store data
+    		data = mTextAntw.substring(tag1E, tag2S);
+    		//store first tag for later replacement
+    		tag = mTextAntw.substring(tag1S,tag1E);
+    		//delete tags and between
+    		exp = mTextAntw.substring(tag1E, tag2E);
+    		mTextAntw = mTextAntw.replace(exp,"");
+    		//add data
+    		insert = "<a href=\"mailto:"+data+"\">"+data+"</a>";
+    		mTextAntw = mTextAntw.replace(tag,insert);
+    		
+    	}
+    	
+    	//Web Links
+    	Matcher matchWeb = pWeb.matcher(mTextAntw);
+    	
+    	if(matchWeb.find()){
+    		//get start/end point of tags
+    		tag1S = matchWeb.start(1);
+    		tag1E = matchWeb.end(1);
+    		tag2S = matchWeb.start(2);
+    		tag2E = matchWeb.end(2);
+    		
+    		//store data
+    		data = mTextAntw.substring(tag1E, tag2S);
+    		//store first tag for later replacement
+    		tag = mTextAntw.substring(tag1S,tag1E);
+    		//delete tags and between
+    		exp = mTextAntw.substring(tag1E, tag2E);
+    		mTextAntw = mTextAntw.replace(exp,"");
+    		//add data
+    		insert = "<a href=\"http://"+data+"\">"+data+"</a>";
+    		mTextAntw = mTextAntw.replace(tag,insert);
+    	}
+    	
+    	//Telefon Links
+    	Matcher matchTel = pTel.matcher(mTextAntw);
+    	
+    	if(matchTel.find()){
+    		//get start/end point of tags
+    		tag1S = matchTel.start(1);
+    		tag1E = matchTel.end(1);
+    		tag2S = matchTel.start(2);
+    		tag2E = matchTel.end(2);
+    		
+    		//store data
+    		data = mTextAntw.substring(tag1E, tag2S);
+    		//store first tag for later replacement
+    		tag = mTextAntw.substring(tag1S,tag1E);
+    		//delete tags and between
+    		exp = mTextAntw.substring(tag1E, tag2E);
+    		mTextAntw = mTextAntw.replace(exp,"");
+    		//add data
+    		insert = "<a href=\"tel:"+data+"\">"+data+"</a>";
+    		mTextAntw = mTextAntw.replace(tag,insert);
+    	}
+    	
+    	//replace all square breaks with html breaks
+    	Matcher matchBR = pBR.matcher(mTextAntw);
+    	
+    	if(matchBR.find()){
+    		mTextAntw = matchBR.replaceAll("<br>");
+    	}
+    	
+    	
+    	//Delete all Tags before Speaking
+    	
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[map\\]", "");
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[\\/map\\]", "");
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[mail\\]", "");
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[\\/mail\\]", "");
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[web\\]", "");
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[\\/web\\]", "");
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[tel\\]", "");
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[\\/tel\\]", "");
+    	mSpeechAntw = mSpeechAntw.replaceAll("\\[br\\]", "");
+    	
     	
     	if(mTTSReady){
     		
     		//speak answer
-    		mTts.speak(antw, TextToSpeech.QUEUE_FLUSH, mHash);
+    		mTts.speak(mSpeechAntw, TextToSpeech.QUEUE_FLUSH, mHash);
     		
     		//fill item in list
-    		mListItems.add(mAntw);
+    		mListItems.add(mTextAntw);
     		mAdapter.notifyDataSetChanged();
     		
     	}else{
@@ -195,10 +334,6 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
     	}
     	
     }
-    
-    
-    
-    
     
     /************************************
     *
@@ -220,23 +355,31 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
 		// TODO Auto-generated method stub
 		mTts.setLanguage(Locale.GERMANY);
 		mHash = new HashMap<String, String>();
-		mHash.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "EOA");
 		mTTSReady = true;
 	}
 	
 	
 	/************************************
     *
-    * Close TTS Engine
+    * On App Close, Pause, TTS Engine
     * 
     */
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		
+		//Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_OFF_TIMEOUT, mTimeOut);
 		mTts.shutdown();
 	}
-	
-	
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		 //cancel speaking
+    	if(mTTSReady){
+    		if(mTts.isSpeaking()){
+    			mTts.stop();
+    		}
+    	}
+	}	
     
 }
