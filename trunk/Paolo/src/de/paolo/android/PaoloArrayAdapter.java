@@ -37,7 +37,7 @@ public class PaoloArrayAdapter extends ArrayAdapter<String>{
 		if(n == 0) {
 			textView.setBackgroundResource(R.drawable.leftbubble2);
 			
-			p = (int) Math.round(textView.getPaddingLeft() * 3);
+			p = (int) Math.round(textView.getPaddingLeft() * 2);
 			textView.setPadding(p, textView.getPaddingTop(),
 					textView.getPaddingRight(), textView.getPaddingBottom());
 		}else{

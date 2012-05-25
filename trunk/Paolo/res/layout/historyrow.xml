@@ -7,6 +7,7 @@
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/paoloField"
     android:textColor="#40312a"
+    android:textColorLink="#0f9492"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:paddingLeft="30dp"
