@@ -3,6 +3,6 @@
 
     <string name="hello">Hello World, PaoloActivity!</string>
     <string name="app_name">Paolo</string>
-    <string name="button_text">Sprich mit Paolo!</string>
+    <string name="button_text">Sprich mit Paolo</string>
 
 </resources>
