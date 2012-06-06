@@ -8,7 +8,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -18,10 +20,13 @@ import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -52,6 +57,7 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
         
         //setContext
         mContext = getApplicationContext();
+        
         
         // Get display items for later interaction
         Button speakButton = (Button) findViewById(R.id.speakbtn);
@@ -159,7 +165,6 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
             mListItems.add(input);
     		mAdapter.notifyDataSetChanged();
             
-            
             //send to paolo asyncTask to get answer
             PaoloSays paolo = new PaoloSays(PaoloActivity.this);
             paolo.execute("TestBot",input);
@@ -205,8 +210,13 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
     	Pattern pMail = Pattern.compile(".*?(\\[mail\\]).*?(\\[\\/mail\\])",Pattern.CASE_INSENSITIVE);
     	Pattern pWeb = Pattern.compile(".*?(\\[web\\]).*?(\\[\\/web\\])",Pattern.CASE_INSENSITIVE);
     	Pattern pTel = Pattern.compile(".*?(\\[tel\\]).*?(\\[\\/tel\\])",Pattern.CASE_INSENSITIVE);
+    	
     	Pattern pBR  = Pattern.compile("(\\[br\\])",Pattern.CASE_INSENSITIVE);
     	
+//    	Pattern pMap = Pattern.compile("(\\[map\\]).*?(\\[\\/map\\])",Pattern.CASE_INSENSITIVE);
+//    	Pattern pMail = Pattern.compile("(\\[mail\\]).*?(\\[\\/mail\\])",Pattern.CASE_INSENSITIVE);
+//    	Pattern pWeb = Pattern.compile("(\\[web\\]).*?(\\[\\/web\\])",Pattern.CASE_INSENSITIVE);
+//    	Pattern pTel = Pattern.compile("(\\[tel\\]).*?(\\[\\/tel\\])",Pattern.CASE_INSENSITIVE);
     	
     	//Google Maps Link
     	Matcher matchMap = pMap.matcher(mTextAntw);
@@ -358,6 +368,63 @@ public class PaoloActivity extends Activity implements OnClickListener, OnInitLi
 		mTTSReady = true;
 	}
 	
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+    {
+		menu.add(1, 1, 0, "Text eingeben");
+     return true;
+    }
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		
+		switch(item.getItemId()){
+	    case 1:
+	        showTextInput();
+	        return true;
+	    }
+		return super.onOptionsItemSelected(item);
+	}
+
+	private void showTextInput() {
+		
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);  
+
+	       alert.setTitle("Frage Paolo:");  
+	       alert.setMessage("");  
+
+
+	       final EditText input = new EditText(mContext);  
+	       alert.setView(input);  
+
+	       alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {  
+	       public void onClick(DialogInterface dialog, int whichButton) {  
+	    	   
+	    	   String inp = input.getText().toString();  
+	    	   
+	    	   //put in list
+	            mListItems.add(inp);
+	    		mAdapter.notifyDataSetChanged();
+	    	   
+	    	   //send to paolo asyncTask to get answer
+	            PaoloSays paolo = new PaoloSays(PaoloActivity.this);
+	            paolo.execute("TestBot",inp);
+	    	   
+	    	   
+	         }  
+	       });  
+
+	       alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {  
+	       public void onClick(DialogInterface dialog, int whichButton) {  
+
+	           return;
+	         }  
+	      });  
+
+	      alert.show();
+		
+	}
 	
 	/************************************
     *
